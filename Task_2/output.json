@@ -1,0 +1,20 @@
+{
+  "observation_id": "OBS-001",
+  "drone_id": "DRONE-01",
+  "latitude": 11.2588,
+  "longitude": 75.7804,
+  "altitude_m": 50.0,
+  "description": "Survey of a green field",
+  "sensor_readings": [
+    {
+      "sensor_name": "Temperature",
+      "value": 28.5,
+      "unit": "°C"
+    },
+    {
+      "sensor_name": "Humidity",
+      "value": 65.0,
+      "unit": "%"
+    }
+  ]
+}
