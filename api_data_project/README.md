@@ -45,5 +45,4 @@ python -m unittest -v
 
 
 
-## Learning Outcomes
-Practiced HTTP requests, REST APIs, JSON handling, pandas, unit testing, and debugging.
+
