@@ -6,14 +6,16 @@ Aethra is a geospatial analysis platform that processes multispectral imagery to
 
 It combines:
 
-Remote sensing and GeoTIFF raster processing
-Vegetation-index calculations
-An existing AI model for vegetation classification
-GIS-based temporal change analysis
-Maps, metrics, and reports
+- Remote sensing and GeoTIFF raster processing
+- Vegetation-index calculations
+- An existing AI model for vegetation classification
+- GIS-based temporal change analysis
+- Maps, metrics, and reports
+
+  
 The application has two analysis modes:
 
-Vegetation mode: analyzes one scene (T1) to classify vegetation condition.
-Wetland mode: compares two scenes (T1 and T2) for vegetation and surface-water change evidenc
+- Vegetation mode: analyzes one scene (T1) to classify vegetation condition.
+- Wetland mode: compares two scenes (T1 and T2) for vegetation and surface-water change evidenc
 
 
