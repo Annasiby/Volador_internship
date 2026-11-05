@@ -1,0 +1,14 @@
+[INFO] [run_20261103_163556] gis_engine.pipeline — Phase 13 — Production pipeline START. run_id=run_20261103_163556
+[INFO] [run_20261103_163556] gis_engine.pipeline — Step 1 — Loading configuration: C:\Users\ancys\Documents\aethra\Volador-wetland-and-vegetation\backend\storage\projects\prj_1790921535755\runs\.run_20261103_163556_run_config.json
+[INFO] [run_20261103_163556] gis_engine.pipeline — Analysis mode: vegetation
+[INFO] [run_20261103_163556] gis_engine.pipeline — Step 1 — Configuration loaded. hash=29cb4cebdf1a7c06…
+[INFO] [run_20261103_163556] gis_engine.pipeline — Step 2 — Validating inputs
+[INFO] [run_20261103_163556] gis_engine.pipeline — Step 2 — Vegetation mode: single scene=C:\Users\ancys\Documents\aethra\wetLand_Depreciation\backend\storage\projects\prj_1790921535755\datasets\t1
+[INFO] [run_20261103_163556] gis_engine.pipeline — Step 3 — Vegetation mode: single-date execution (bypassing temporal alignment)
+[INFO] [run_20261103_163556] gis_engine.pipeline — Steps 4–7 — Vegetation analysis (single-date)
+[INFO] [run_20261103_163556] gis_engine.pipeline — Vegetation analysis — single-date inference
+[INFO] [run_20261103_163556] gis_engine.inference.onnx — [onnx] GPU provider (CUDA) unavailable. Using CPUExecutionProvider.
+[WARNING] [run_20261103_163556] gis_engine.inference.onnx — [onnx] Initial provider list ['CPUExecutionProvider'] failed ([ONNXRuntimeError] : 1 : FAIL : Load model from C:\Users\ancys\Documents\aethra\Volador-wetland-and-vegetation\backend\Engine_module\models\best_finetuned_model.onnx failed:N:\_work\1\s\onnxruntime\core\graph\model.cc:257 onnxruntime::Model::Model Unsupported model IR version: 14, max supported IR version: 13
+). Falling back to CPUExecutionProvider.
+[ERROR] [run_20261103_163556] gis_engine.pipeline — Phase 13 — Pipeline FAILED: Vegetation analysis failed: Single-date vegetation inference failed: [ONNXRuntimeError] : 1 : FAIL : Load model from C:\Users\ancys\Documents\aethra\Volador-wetland-and-vegetation\backend\Engine_module\models\best_finetuned_model.onnx failed:N:\_work\1\s\onnxruntime\core\graph\model.cc:257 onnxruntime::Model::Model Unsupported model IR version: 14, max supported IR version: 13
+

@@ -1,0 +1,18 @@
+[INFO] [run_20261103_165645] gis_engine.pipeline — Phase 13 — Production pipeline START. run_id=run_20261103_165645
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 1 — Loading configuration: C:\Users\ancys\Documents\aethra\Volador-wetland-and-vegetation\backend\storage\projects\prj_1790921535755\runs\.run_20261103_165645_run_config.json
+[INFO] [run_20261103_165645] gis_engine.pipeline — Analysis mode: wetland
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 1 — Configuration loaded. hash=aa16fd8b5a10f6d2…
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 2 — Validating inputs
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 2 — Wetland inputs valid. T1=2026-11-02 T2=2026-11-05 interval=3 days
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 3 — Spatial/temporal alignment
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 3 — Alignment complete. overlap=100.00%
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 3A — Building authoritative preparation mask
+[INFO] [run_20261103_165645] gis_engine.pipeline — [EXCLUSION TRACE] reference grid: crs=EPSG:32633, transform=| 10.00, 0.00, 500000.00|
+| 0.00,-10.00, 5000000.00|
+| 0.00, 0.00, 1.00|, width=100, height=100, bounds=(500000.0, 4999000.0, 501000.0, 5000000.0)
+[INFO] [run_20261103_165645] gis_engine.pipeline — [EXCLUSION TRACE] inclusion geometry: Full Grid
+[INFO] [run_20261103_165645] gis_engine.pipeline — [EXCLUSION TRACE] manual exclusions: 0 exclusions
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 3A — Analysis footprint: total_overlap=100.0000 ha, inclusion=100.0000 ha, excluded=0.0000 ha, effective=100.0000 ha
+[INFO] [run_20261103_165645] gis_engine.pipeline — Step 3A — Preparation complete: inclusion=full, 0 exclusions, excluded_pixels=0, effective_pixels=10000
+[INFO] [run_20261103_165645] gis_engine.pipeline — Steps 4–7 — Vegetation analysis on T1 & T2
+[ERROR] [run_20261103_165645] gis_engine.pipeline — Phase 13 — Pipeline FAILED: Vegetation analysis failed: No module named 'cv2'

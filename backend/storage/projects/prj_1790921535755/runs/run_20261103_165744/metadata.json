@@ -1,0 +1,37 @@
+{
+    "run_id": "run_20261103_165744",
+    "software_version": "1.0.0",
+    "analysis_mode": "wetland",
+    "git_commit": "12e6b9dbce27467eca9f7cc8a4ca3adec700ceed",
+    "execution_timestamp_utc": "2026-11-03T16:58:27.048375+00:00",
+    "python_version": "3.13.0 (tags/v3.13.0:60403a5, Oct  7 2024, 09:38:07) [MSC v.1941 64 bit (AMD64)]",
+    "os": "Windows-11-10.0.26200-SP0",
+    "model_path": "C:\\Users\\ancys\\Documents\\aethra\\Volador-wetland-and-vegetation\\backend\\Engine_module\\models\\best_finetuned_model.onnx",
+    "model_sha256": "27c1e54b561367c2c21e852aab7ca1eb130494a4eb15ab929032654ac6c467c9",
+    "configuration_hash": "aa16fd8b5a10f6d29be4e05d9bbb533e06de51121a6f467c5937def789858183",
+    "config_snapshot": "C:\\Users\\ancys\\Documents\\aethra\\Volador-wetland-and-vegetation\\backend\\storage\\projects\\prj_1790921535755\\runs\\run_20261103_165744\\config_used.json",
+    "input_t1": {
+        "path": "C:\\Users\\ancys\\Documents\\aethra\\wetLand_Depreciation\\backend\\storage\\projects\\prj_1790921535755\\datasets\\t1",
+        "exists": true,
+        "size_bytes": null,
+        "sha256": null
+    },
+    "input_t2": {
+        "path": "C:\\Users\\ancys\\Documents\\aethra\\wetLand_Depreciation\\backend\\storage\\projects\\prj_1790921535755\\datasets\\t2",
+        "exists": true,
+        "size_bytes": null,
+        "sha256": null
+    },
+    "t1_date": "2026-11-02",
+    "t2_date": "2026-11-05",
+    "crs": "EPSG:32633",
+    "resolution": [
+        10.0,
+        10.0
+    ],
+    "dimensions": [
+        100,
+        100
+    ],
+    "total_runtime_seconds": 41.60137190000023
+}
