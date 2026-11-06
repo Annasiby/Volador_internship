@@ -1,0 +1,17 @@
+Person clicks in the React website
+              ↓
+TypeScript API client sends an HTTP request
+              ↓
+FastAPI router receives it
+              ↓
+Backend service saves files or starts a run
+              ↓
+Python GIS engine reads and processes GeoTIFF pixels
+              ↓
+ONNX Runtime runs the AI model for vegetation classes
+              ↓
+GIS calculations compare T1 and T2 in wetland mode
+              ↓
+Backend serves result data, map layers, and PDF reports
+              ↓
+React displays them

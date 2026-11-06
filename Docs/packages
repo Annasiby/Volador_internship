@@ -1,0 +1,21 @@
+
+Package to install	Python import	Purpose in Aethra
+fastapi-	fastapi	Defines the backend HTTP API: routes for projects, datasets, analysis runs, results, map layers, and reports.
+
+uvicorn-	uvicorn	Runs the FastAPI application as a local web server.
+
+numpy-	numpy	Holds and computes on raster pixels and arrays; used for indexes, masks, classifications, statistics, and change calculations.
+
+rasterio-	rasterio	Reads and writes GeoTIFFs, handles CRS and raster metadata, reprojects/alines rasters, and rasterizes geographic shapes.
+
+onnxruntime- onnxruntime	Loads and runs the existing ONNX vegetation-classification model. Use the CPU package to start; the code can use a CUDA provider if available.
+
+scipy-	scipy	Supplies scientific-processing functions, including Gaussian smoothing for vegetation indices.
+
+pyshp-	shapefile	Reads ESRI Shapefile vector boundaries. The package is called pyshp when installing, but imported as shapefile.
+
+Pillow-PIL	Creates PNG images from raster arrays for map-layer previews.
+
+matplotlib-matplotlib	Renders cartographic figures such as vegetation, transition, water, and analysis-area maps.
+
+reportlab-	reportlab	Builds the simple and technical PDF reports.

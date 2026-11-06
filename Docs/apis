@@ -1,0 +1,11 @@
+The FastAPI application in backend/app/main.py registers these routers: projects, datasets, runs, results, layers, and reports. The request/response data structures are in backend/app/schemas.py.
+
+API area	Main endpoints	Purpose
+Health	GET /api/health	Check API availability.
+Projects	GET/POST /api/projects, GET /api/projects/{id}, PATCH /api/projects/{id}/dates, POST /api/projects/{id}/reset, DELETE /api/projects/{id}	Create/list/read, update dates, reset, and delete project workspaces.
+Preparation	GET/PUT /api/projects/{id}/preparation; POST .../commit, POST .../unlock	Load and save area-preparation state, commit it, and unlock it for edits.
+Datasets	POST /api/projects/{id}/datasets/upload, POST .../validate, GET .../preview-info, GET .../preview-image	Upload bands or boundary, validate inputs, and return preview information/images.
+Runs	POST /api/runs, GET /api/runs/{run_id}	Start an analysis and poll run status.
+Results	GET /api/runs/{run_id}/results	Return the run’s analysis JSON and associated metrics.
+Layers	GET /api/runs/{run_id}/layers, GET .../layers/{layer_id}/image	List available layers and render a selected raster as a PNG.
+Reports	GET /api/runs/{run_id}/report/pdf, GET .../report/pdf/technical	Download the simple or technical PDF report if available.

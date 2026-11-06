@@ -1,0 +1,22 @@
+The React frontend displays the workspace and holds UI state. Its API client sends requests to FastAPI.
+FastAPI routes handle project, dataset, run, result, layer, and report requests.
+Application services save project and dataset information to the local filesystem. Project metadata is stored in JSON; datasets and run outputs are kept in project folders.
+RunWorker submits analysis to a ThreadPoolExecutor. The current code configures two worker threads.
+The GIS engine loads and validates the raster bands, aligns T1 and T2 for wetland analysis, applies the analysis-area masks, and runs vegetation inference.
+ONNX Runtime runs the existing model on a five-channel tensor. The model predicts vegetation classes per pixel.
+For wetland mode, the pipeline also computes temporal transitions, CVA, degradation/recovery, and water-related analysis. It calculates metrics and QA, then attempts to generate map figures and PDF reports.
+The backend exposes results as JSON, map images, and report downloads. The map layer endpoint renders a raster as a PNG image; it is not shown in this code as a conventional XYZ tile service.
+Vegetation mode follows the pipeline’s single-scene branch and does not do T1-versus-T2 change analysis. In wetland mode, the AI classifies both dates; GIS calculations compare those classifications and indices.
+
+
+or
+
+The user works in the React frontend. It provides screens for uploading datasets, preparing an analysis area, running analysis, and viewing results.
+The frontend calls FastAPI. It sends project and dataset requests, uploads files, asks for validation, and starts analysis runs.
+The backend stores project information and files locally. Project metadata is stored in JSON; scene bands, preparation data, and run outputs are kept in project folders.
+The run API delegates analysis to a background worker. The current code uses an in-process ThreadPoolExecutor with two worker threads.
+The GIS engine is the processing core. It validates input, applies the analysis mask, prepares the raster data, and calls the existing ONNX model.
+The two modes take different paths.
+Vegetation: one T1 scene is classified; no T1-versus-T2 change analysis is performed.
+Wetland: T1 and T2 are aligned and classified; then GIS code calculates temporal changes and water-related evidence.
+The engine writes outputs to disk. The API later reads those outputs to return result data, render map images, or serve a PDF report.
