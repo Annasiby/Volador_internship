@@ -3,7 +3,15 @@ backend/app/routers/projects.py
 ================================
 Router for managing project workspaces.
 """
-
+from fastapi import APIRouter, HTTPException, Query, status
+from ..schemas import (
+    Project,
+    ProjectCreate,
+    PreparationState,
+    PreparationUpdateRequest,
+    ProjectRunsResponse,
+)
+from ..services import ProjectStore, PreparationService, RunWorker, now_iso
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status
@@ -42,6 +50,18 @@ def get_project(project_id: str):
     if not project:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     return project
+
+
+@router.get("/{project_id}/runs", response_model=ProjectRunsResponse)
+def list_project_runs(
+    project_id: str,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    try:
+        return RunWorker.list_project_runs(project_id, limit=limit, offset=offset)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
 
 @router.patch("/{project_id}/dates")
 def update_project_dates(project_id: str, payload: ProjectDatesUpdate):

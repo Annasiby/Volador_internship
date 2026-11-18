@@ -24,6 +24,9 @@ import {
 } from "../api/client";
 import { ProjectContext } from "./projectContextObject";
 
+
+
+
 export type ManualExclusion = {
   id: string;
   geometry: {
@@ -120,13 +123,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
             setProject((prev) =>
               prev
                 ? {
-                    ...prev,
-                    datasets_ready: true,
-                    status:
-                      prev.preparation_status === "COMMITTED"
-                        ? "PREPARATION_COMMITTED"
-                        : "DATASETS_CONFIGURED",
-                  }
+                  ...prev,
+                  datasets_ready: true,
+                  status:
+                    prev.preparation_status === "COMMITTED"
+                      ? "PREPARATION_COMMITTED"
+                      : "DATASETS_CONFIGURED",
+                }
                 : null
             );
           }
@@ -185,11 +188,11 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
       setProject((prev) =>
         prev
           ? {
-              ...prev,
-              analysis_mode: resolvedMode,
-              datasets_ready: val.valid,
-              status: val.valid ? "READY" : "INVALID",
-            }
+            ...prev,
+            analysis_mode: resolvedMode,
+            datasets_ready: val.valid,
+            status: val.valid ? "READY" : "INVALID",
+          }
           : null
       );
     } catch (err: unknown) {
@@ -401,6 +404,13 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const selectRun = async (runId: string) => {
+    const status = await getRunStatus(runId);
+    setRunStatus(status);
+    if (status.status === "COMPLETED") {
+      await loadRunData(runId);
+    }
+  };
   const refreshResults = async () => {
     if (runStatus?.run_id) {
       await loadRunData(runStatus.run_id);

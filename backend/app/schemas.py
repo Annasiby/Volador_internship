@@ -167,6 +167,25 @@ class RunStatusResponse(BaseModel):
     error: Optional[str] = None
 
 
+class RunSummary(BaseModel):
+    run_id: str
+    status: str
+    mode: Optional[str] = None
+    mode_inferred: Optional[bool] = False
+    created_at: Optional[str] = None
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    t1_date: Optional[str] = None
+    t2_date: Optional[str] = None
+    error: Optional[str] = None
+
+
+class ProjectRunsResponse(BaseModel):
+    project_id: str
+    total: int
+    runs: List[RunSummary]
+
+
 # --- Layer ---
 class MapLayerInfo(BaseModel):
     id: str

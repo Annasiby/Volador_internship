@@ -2,7 +2,7 @@ import { useState } from "react";
 import AnalysisConfig from "./AnalysisConfig";
 import AnalysisInputs from "./AnalysisInputs";
 import { useProject } from "../../context/useProject";
-
+import AnalysisHistoryPanel from "./AnalysisHistoryPanel";
 type AnalysisMode = "vegetation" | "wetland";
 
 type AnalysisPageProps = {
@@ -59,8 +59,8 @@ export default function AnalysisPage({
         value === "vegetation" || value === "wetland"
           ? value
           : analysisMode === "vegetation"
-          ? "wetland"
-          : "vegetation";
+            ? "wetland"
+            : "vegetation";
       onAnalysisModeChange(targetMode);
     } else {
       toggleConfig(key);
@@ -167,8 +167,8 @@ export default function AnalysisPage({
               {!isDatasetValid && !isRunning
                 ? "Dataset validation required before launching analysis run."
                 : analysisMode === "vegetation"
-                ? "Launch single-date vegetation health inference (Green, Red, RedEdge, NIR → NDVI/GNDVI/NDRE)."
-                : "Launch background execution of Sentinel-2 inference, 4×4 transitions, CVA, NDWI, and PDF cartography."}
+                  ? "Launch single-date vegetation health inference (Green, Red, RedEdge, NIR → NDVI/GNDVI/NDRE)."
+                  : "Launch background execution of Sentinel-2 inference, 4×4 transitions, CVA, NDWI, and PDF cartography."}
             </div>
           </div>
 
@@ -181,11 +181,15 @@ export default function AnalysisPage({
             {isRunning
               ? `Executing (${runStatus.progress}%)...`
               : !isDatasetValid
-              ? "Validation Required"
-              : "Run Analysis"}
+                ? "Validation Required"
+                : "Run Analysis"}
           </button>
         </div>
       </section>
+
+      {/* ── Analysis History Panel ── */}
+      <AnalysisHistoryPanel />
     </div>
   );
 }
+

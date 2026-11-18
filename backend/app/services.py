@@ -593,7 +593,25 @@ class RunWorker:
         runs_dir = STORAGE_DIR / "projects" / project_id / "runs"
         runs_dir.mkdir(parents=True, exist_ok=True)
         run_output_dir = runs_dir / run_id
+        run_output_dir.mkdir(parents=True, exist_ok=True)
 
+        effective_mode = "wetland"
+        if config_overrides and isinstance(config_overrides, dict):
+            effective_mode = (
+                config_overrides.get("analysis_mode")
+                or config_overrides.get("analysisMode")
+                or project.get("analysis_mode")
+                or "wetland"
+            ).lower()
+        elif project.get("analysis_mode"):
+            effective_mode = project["analysis_mode"].lower()
+
+        t1_date = (
+            config_overrides.get("t1_date") if config_overrides else None
+        ) or project.get("t1_date")
+        t2_date = (
+            config_overrides.get("t2_date") if config_overrides else None
+        ) or project.get("t2_date")
 
         run_info = {
             "run_id": run_id,
@@ -610,6 +628,22 @@ class RunWorker:
         }
         RUN_STATES[run_id] = run_info
 
+        # Persist run_meta.json at launch
+        initial_meta = {
+            "project_id": project_id,
+            "run_id": run_id,
+            "mode": effective_mode,
+            "mode_inferred": False,
+            "status": "QUEUED",
+            "created_at": run_info["created_at"],
+            "started_at": None,
+            "completed_at": None,
+            "t1_date": t1_date,
+            "t2_date": t2_date,
+            "error": None,
+        }
+        cls._save_run_meta(run_output_dir, initial_meta)
+
         # Launch background task
         executor.submit(cls._execute_pipeline, run_id, project, run_output_dir, config_overrides)
         return run_info
@@ -621,6 +655,13 @@ class RunWorker:
         run_info["status"] = "VALIDATING"
         run_info["progress"] = 10
         run_info["current_step"] = "Input Validation"
+
+        meta = cls._load_run_meta(output_dir) or {}
+        meta.update({
+            "status": "VALIDATING",
+            "started_at": run_info["started_at"],
+        })
+        cls._save_run_meta(output_dir, meta)
 
         try:
             config_path = ENGINE_SRC.parent / "configs" / "config.json"
@@ -849,76 +890,338 @@ class RunWorker:
             if not run_dir.is_dir():
                 continue
 
-            manifest_path = run_dir / "manifest.json"
-            metadata_path = run_dir / "metadata.json"
+            effective_dir = run_dir / run_id if (run_dir / run_id).is_dir() else run_dir
+
+            # 1. Fast path: check for run_meta.json first
+            meta = cls._load_run_meta(run_dir)
+            if meta and isinstance(meta, dict):
+                recovered = {
+                    "run_id": run_id,
+                    "project_id": meta.get("project_id", project_dir.name),
+                    "status": meta.get("status", "COMPLETED"),
+                    "progress": 100 if meta.get("status") == "COMPLETED" else 0,
+                    "current_step": meta.get("status", "COMPLETED"),
+                    "created_at": meta.get("created_at", ""),
+                    "started_at": meta.get("started_at"),
+                    "completed_at": meta.get("completed_at"),
+                    "message": "Run recovered from persistent storage.",
+                    "output_directory": str(effective_dir),
+                    "error": cls._clean_error_message(meta.get("error")),
+                }
+                RUN_STATES[run_id] = recovered
+                return recovered
+
+            # 2. Legacy fallback recovery
+            manifest_path = effective_dir / "manifest.json"
+            if not manifest_path.exists() and (run_dir / "manifest.json").exists():
+                manifest_path = run_dir / "manifest.json"
+
+            metadata_path = effective_dir / "metadata.json"
+            if not metadata_path.exists() and (run_dir / "metadata.json").exists():
+                metadata_path = run_dir / "metadata.json"
 
             persisted: Dict[str, Any] = {}
-
-            # Prefer manifest.json because it is explicitly run-level metadata.
             if manifest_path.exists():
                 try:
                     with manifest_path.open("r", encoding="utf-8") as f:
                         manifest = json.load(f)
-
                     if isinstance(manifest, dict):
                         persisted.update(manifest)
                 except (OSError, json.JSONDecodeError):
                     pass
 
-            # Metadata can provide additional persisted information.
             if metadata_path.exists():
                 try:
                     with metadata_path.open("r", encoding="utf-8") as f:
                         metadata = json.load(f)
-
                     if isinstance(metadata, dict):
                         for key, value in metadata.items():
                             persisted.setdefault(key, value)
                 except (OSError, json.JSONDecodeError):
                     pass
 
-            # Reconstruct the API run object using persisted information.
-            recovered: Dict[str, Any] = {
+            analysis_result = effective_dir / "analysis_result.json"
+            if not analysis_result.exists() and (run_dir / "analysis_result.json").exists():
+                analysis_result = run_dir / "analysis_result.json"
+
+            final_report = effective_dir / "reports" / "FINAL_ANALYSIS_REPORT.pdf"
+            if not final_report.exists() and (run_dir / "reports" / "FINAL_ANALYSIS_REPORT.pdf").exists():
+                final_report = run_dir / "reports" / "FINAL_ANALYSIS_REPORT.pdf"
+
+            status = "FAILED"
+            progress = 0
+            err_msg = None
+
+            if analysis_result.exists():
+                try:
+                    with open(analysis_result, "r", encoding="utf-8") as f:
+                        res_data = json.load(f)
+                    res_status = res_data.get("status")
+                    if res_status in ["SUCCESS", "WARNING"]:
+                        status = "COMPLETED"
+                        progress = 100
+                    else:
+                        status = "FAILED"
+                        err_msg = "; ".join(res_data.get("errors", [])) if res_data.get("errors") else "Analysis failed"
+                except Exception:
+                    status = "FAILED"
+                    err_msg = "Corrupt analysis results"
+            else:
+                status = "FAILED"
+                err_msg = "Analysis incomplete or missing results"
+
+            recovered = {
                 "run_id": run_id,
                 "project_id": project_dir.name,
-                "status": persisted.get("status", "COMPLETED"),
-                "progress": persisted.get("progress", 100),
-                "current_step": persisted.get("current_step", "COMPLETED"),
-                "created_at": persisted.get("created_at", ""),
-                "started_at": persisted.get("started_at"),
-                "completed_at": persisted.get("completed_at"),
-                "message": persisted.get(
-                    "message",
-                    "Run recovered from persistent storage."
-                ),
-                "output_directory": str(run_dir),
+                "status": status,
+                "progress": progress,
+                "current_step": status,
+                "created_at": persisted.get("created_at", persisted.get("execution_timestamp_utc", "")),
+                "started_at": persisted.get("started_at", persisted.get("execution_timestamp_utc")),
+                "completed_at": persisted.get("completed_at", persisted.get("generated_utc")),
+                "message": persisted.get("message", "Run recovered from persistent storage."),
+                "output_directory": str(effective_dir),
+                "error": cls._clean_error_message(persisted.get("error") or (err_msg if status == "FAILED" else None)),
             }
-
-            if persisted.get("error"):
-                recovered["error"] = persisted["error"]
-
-            # If the persistent outputs exist but the manifest does not contain
-            # an explicit terminal status, the presence of analysis_result.json
-            # and the final report provides a deterministic completion signal.
-            analysis_result = run_dir / "analysis_result.json"
-            final_report = run_dir / "reports" / "FINAL_ANALYSIS_REPORT.pdf"
-
-            if (
-                recovered["status"] not in {"FAILED"}
-                and analysis_result.exists()
-                and final_report.exists()
-            ):
-                recovered["status"] = "COMPLETED"
-                recovered["progress"] = 100
-                recovered["current_step"] = "COMPLETED"
-
-            # Cache the recovered state so subsequent requests are cheap.
             RUN_STATES[run_id] = recovered
-
             return recovered
 
         return None
 
+    @classmethod
+    def _clean_error_message(cls, err: Any) -> Optional[str]:
+        if err is None:
+            return None
+        text = str(err).strip()
+        if not text:
+            return None
+
+        # Extract last line or non-traceback part if a traceback is included
+        if "Traceback (most recent call last):" in text:
+            lines = [l.strip() for l in text.splitlines() if l.strip()]
+            for line in reversed(lines):
+                if not (line.startswith("File ") or line.startswith("line ")):
+                    text = line
+                    break
+
+        # Remove file system paths (Windows: C:\... or \\... , Unix: /...)
+        text = re.sub(r"[a-zA-Z]:\\[^:\s,;'\"]+", "<path>", text)
+        text = re.sub(r"/(?:[a-zA-Z0-9._-]+/)+[a-zA-Z0-9._-]+", "<path>", text)
+
+        # Collapse whitespace
+        text = " ".join(text.split())
+
+        # Truncate to about 300 characters
+        if len(text) > 300:
+            text = text[:297].rstrip() + "..."
+
+        return text
+
+    @classmethod
+    def _load_run_meta(cls, run_dir: Path) -> Optional[Dict[str, Any]]:
+        candidates = [
+            run_dir / "run_meta.json",
+            run_dir / run_dir.name / "run_meta.json",
+        ]
+        for c in candidates:
+            if c.is_file():
+                try:
+                    with open(c, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
+                except Exception as e:
+                    logger.warning("Failed to load run_meta from %s: %s", c, e)
+        return None
+
+    @classmethod
+    def _read_run_summary(cls, project_id: str, run_dir: Path) -> Dict[str, Any]:
+        run_id = run_dir.name
+        effective_dir = run_dir / run_id if (run_dir / run_id).is_dir() else run_dir
+
+        # 1. Try reading run_meta.json
+        meta = cls._load_run_meta(run_dir)
+        if meta and isinstance(meta, dict):
+            return {
+                "run_id": meta.get("run_id") or run_id,
+                "mode": meta.get("mode"),
+                "mode_inferred": bool(meta.get("mode_inferred", False)),
+                "status": meta.get("status", "COMPLETED"),
+                "created_at": meta.get("created_at"),
+                "started_at": meta.get("started_at"),
+                "completed_at": meta.get("completed_at"),
+                "t1_date": meta.get("t1_date"),
+                "t2_date": meta.get("t2_date"),
+                "error": cls._clean_error_message(meta.get("error")),
+            }
+
+        # 2. Legacy run inference (no run_meta.json)
+        mode = None
+        mode_inferred = True
+
+        # Check metadata.json
+        meta_dict = {}
+        metadata_paths = [effective_dir / "metadata.json", run_dir / "metadata.json"]
+        for mp in metadata_paths:
+            if mp.is_file():
+                try:
+                    with open(mp, "r", encoding="utf-8") as f:
+                        meta_dict = json.load(f)
+                    break
+                except Exception as e:
+                    logger.warning("Failed reading legacy metadata.json from %s: %s", mp, e)
+
+        # Check analysis_result.json
+        analysis_data = {}
+        analysis_paths = [effective_dir / "analysis_result.json", run_dir / "analysis_result.json"]
+        analysis_file_found = False
+        for ap in analysis_paths:
+            if ap.is_file():
+                analysis_file_found = True
+                try:
+                    with open(ap, "r", encoding="utf-8") as f:
+                        analysis_data = json.load(f)
+                    break
+                except Exception as e:
+                    logger.warning("Failed reading legacy analysis_result.json from %s: %s", ap, e)
+
+        # Check manifest.json
+        manifest_data = {}
+        manifest_paths = [effective_dir / "manifest.json", run_dir / "manifest.json"]
+        for mp in manifest_paths:
+            if mp.is_file():
+                try:
+                    with open(mp, "r", encoding="utf-8") as f:
+                        manifest_data = json.load(f)
+                    break
+                except Exception as e:
+                    logger.warning("Failed reading legacy manifest.json from %s: %s", mp, e)
+
+        # Determine mode
+        if meta_dict.get("analysis_mode"):
+            mode = meta_dict["analysis_mode"]
+        elif analysis_data.get("analysis_mode"):
+            mode = analysis_data["analysis_mode"]
+        else:
+            cfg_paths = [effective_dir / "config_used.json", run_dir / "config_used.json"]
+            for cp in cfg_paths:
+                if cp.is_file():
+                    try:
+                        with open(cp, "r", encoding="utf-8") as f:
+                            cfg_data = json.load(f)
+                        if cfg_data.get("analysis_mode"):
+                            mode = cfg_data["analysis_mode"]
+                            break
+                    except Exception:
+                        pass
+            if not mode:
+                has_wetland = (
+                    (effective_dir / "wetland").is_dir()
+                    or (run_dir / "wetland").is_dir()
+                    or (effective_dir / "hydrology").is_dir()
+                    or (run_dir / "hydrology").is_dir()
+                    or (effective_dir / "change").is_dir()
+                    or (run_dir / "change").is_dir()
+                )
+                mode = "wetland" if has_wetland else "vegetation"
+
+        # Determine status and error
+        status = "FAILED"
+        error = None
+        if analysis_file_found and analysis_data:
+            res_status = analysis_data.get("status")
+            if res_status in ["SUCCESS", "WARNING"]:
+                status = "COMPLETED"
+                error = None
+            else:
+                status = "FAILED"
+                err_raw = "; ".join(analysis_data.get("errors", [])) if analysis_data.get("errors") else "Analysis pipeline failed"
+                error = cls._clean_error_message(err_raw)
+        else:
+            status = "FAILED"
+            error = "Analysis incomplete or terminated unexpectedly"
+
+        created_at = None
+        m = re.match(r"^run_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})", run_id)
+        if m:
+            created_at = f"{m.group(1)}-{m.group(2)}-{m.group(3)}T{m.group(4)}:{m.group(5)}:{m.group(6)}Z"
+        else:
+            try:
+                created_at = datetime.utcfromtimestamp(run_dir.stat().st_mtime).strftime("%Y-%m-%dT%H:%M:%SZ")
+            except OSError:
+                pass
+
+        started_at = meta_dict.get("execution_timestamp_utc") or created_at
+        completed_at = None
+        if status == "COMPLETED":
+            completed_at = manifest_data.get("generated_utc") or meta_dict.get("execution_timestamp_utc")
+
+        t1_date = None
+        t2_date = None
+        temporal = analysis_data.get("temporal") or {}
+        if temporal.get("t1_date") and temporal.get("t1_date") != "single-date":
+            t1_date = temporal["t1_date"]
+        if temporal.get("t2_date"):
+            t2_date = temporal["t2_date"]
+
+        if not t1_date and meta_dict.get("date") and meta_dict.get("date") != "single-date":
+            t1_date = meta_dict["date"]
+
+        if not t1_date or (mode == "wetland" and not t2_date):
+            proj = ProjectStore.get_project(project_id)
+            if proj:
+                t1_date = t1_date or proj.get("t1_date")
+                t2_date = t2_date or proj.get("t2_date")
+
+        return {
+            "run_id": run_id,
+            "mode": mode,
+            "mode_inferred": mode_inferred,
+            "status": status,
+            "created_at": created_at,
+            "started_at": started_at,
+            "completed_at": completed_at,
+            "t1_date": t1_date,
+            "t2_date": t2_date,
+            "error": error,
+        }
+
+    @classmethod
+    def list_project_runs(cls, project_id: str, limit: int = 50, offset: int = 0) -> Dict[str, Any]:
+        project = ProjectStore.get_project(project_id)
+        if not project:
+            raise ValueError(f"Project {project_id} not found")
+
+        try:
+            limit = int(limit)
+        except (TypeError, ValueError):
+            limit = 50
+        try:
+            offset = int(offset)
+        except (TypeError, ValueError):
+            offset = 0
+
+        runs_dir = STORAGE_DIR / "projects" / project_id / "runs"
+        candidates = [p for p in runs_dir.iterdir() if p.is_dir() and not p.name.startswith(".")] if runs_dir.exists() else []
+        
+        # Sort descending by run timestamp
+        candidates.sort(key=lambda p: (re.match(r"^run_(\d{8}_\d{6})", p.name).group(1) if re.match(r"^run_(\d{8}_\d{6})", p.name) else "0", p.name), reverse=True)
+        
+        total = len(candidates)
+        paged = candidates[offset : offset + limit]
+        
+        runs_list = []
+        for r_dir in paged:
+            run_id = r_dir.name
+            summary = cls._read_run_summary(project_id, r_dir)
+            # Overlay active in-memory state only if project matches
+            if run_id in RUN_STATES and RUN_STATES[run_id].get("project_id") == project_id:
+                summary["status"] = RUN_STATES[run_id].get("status", summary["status"])
+                if RUN_STATES[run_id].get("error"):
+                    summary["error"] = cls._clean_error_message(RUN_STATES[run_id]["error"])
+            runs_list.append(summary)
+
+        return {"project_id": project_id, "total": total, "runs": runs_list}
 
 class TileRenderer:
     """Renders GeoTIFF rasters as PNG images for frontend map display."""

@@ -82,18 +82,18 @@ export interface RunStatus {
   run_id: string;
   project_id: string;
   status:
-    | "QUEUED"
-    | "VALIDATING"
-    | "ALIGNING"
-    | "PREPROCESSING"
-    | "INFERENCE"
-    | "CHANGE_ANALYSIS"
-    | "HYDROLOGY"
-    | "METRICS"
-    | "VALIDATION"
-    | "REPORTING"
-    | "COMPLETED"
-    | "FAILED";
+  | "QUEUED"
+  | "VALIDATING"
+  | "ALIGNING"
+  | "PREPROCESSING"
+  | "INFERENCE"
+  | "CHANGE_ANALYSIS"
+  | "HYDROLOGY"
+  | "METRICS"
+  | "VALIDATION"
+  | "REPORTING"
+  | "COMPLETED"
+  | "FAILED";
   progress: number;
   current_step: string;
   created_at: string;
@@ -101,6 +101,25 @@ export interface RunStatus {
   completed_at?: string;
   message?: string;
   error?: string;
+}
+
+export interface ProjectRunItem {
+  run_id: string;
+  mode?: "vegetation" | "wetland" | string;
+  mode_inferred?: boolean;
+  status: string;
+  created_at?: string;
+  started_at?: string;
+  completed_at?: string;
+  t1_date?: string;
+  t2_date?: string;
+  error?: string | null;
+}
+
+export interface ProjectRunsResponse {
+  project_id: string;
+  total: number;
+  runs: ProjectRunItem[];
 }
 
 export interface MapLayer {
@@ -184,9 +203,9 @@ export interface AnalysisResults {
     [key: string]: any;
   };
   spectral_indices?: {
-    ndvi?: { mean?: number; median?: number; std?: number; p95?: number; [key: string]: any };
-    gndvi?: { mean?: number; median?: number; std?: number; p95?: number; [key: string]: any };
-    ndre?: { mean?: number; median?: number; std?: number; p95?: number; [key: string]: any };
+    ndvi?: { mean?: number; median?: number; std?: number; p95?: number;[key: string]: any };
+    gndvi?: { mean?: number; median?: number; std?: number; p95?: number;[key: string]: any };
+    ndre?: { mean?: number; median?: number; std?: number; p95?: number;[key: string]: any };
     [key: string]: any;
   };
   uncertainty?: {
@@ -411,6 +430,20 @@ export async function getRunResults(runId: string): Promise<AnalysisResults> {
   return res.json();
 }
 
+export async function getProjectRuns(
+  projectId: string,
+  limit: number = 50,
+  offset: number = 0
+): Promise<ProjectRunsResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  const res = await fetch(`${API_BASE}/projects/${projectId}/runs?${params.toString()}`);
+  if (!res.ok) await handleResponseError(res, "Failed to fetch project analysis runs");
+  return res.json();
+}
+
 export async function getRunLayers(runId: string): Promise<MapLayer[]> {
   const res = await fetch(`${API_BASE}/runs/${runId}/layers`);
   if (!res.ok) await handleResponseError(res, "Failed to fetch layer catalog");
@@ -477,6 +510,8 @@ export async function getDatasetPreviewInfo(projectId: string): Promise<PreviewI
   if (!res.ok) await handleResponseError(res, "Failed to fetch dataset preview info");
   return res.json();
 }
+
+
 
 export function getDatasetPreviewImageUrl(projectId: string, timePoint: string = "t1"): string {
   return `${API_BASE}/projects/${projectId}/datasets/preview-image?time_point=${timePoint}`;

@@ -1,9 +1,9 @@
 {
   "project_id": "prj_1790921535755",
-  "status": "COMMITTED",
-  "is_locked": true,
+  "status": "DRAFT",
+  "is_locked": false,
   "committed_at": "2026-11-03T16:30:00Z",
-  "updated_at": "2026-11-03T16:30:00Z",
+  "updated_at": "2026-11-06T04:20:38Z",
   "inclusion": null,
   "manual_exclusions": [],
   "metrics": {

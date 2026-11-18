@@ -45,6 +45,7 @@ export interface ProjectContextType {
   saveDraft: (inclusion: Record<string, any> | null, exclusions: ManualExclusion[]) => Promise<void>;
   commitArea: () => Promise<void>;
   unlockArea: () => Promise<void>;
+  selectRun: (runId: string) => Promise<void>;
 }
 
 export const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
