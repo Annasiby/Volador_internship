@@ -1,0 +1,9 @@
+- Added RunSummary and ProjectRunsResponse schemas in schemas.py.
+- Saved initial metadata at run launch in services.py.
+- Created root package.json to unblock frontend tests without permission errors.
+- Added list_project_runs and durable run_meta.json read/recovery in services.py.
+- Backend Route: Expose GET /api/projects/{project_id}/runs in projects.py.
+- Frontend API: Add getProjectRuns in client.ts.
+- Frontend Context: Add selectRun(runId) in ProjectContext.tsx.
+- Frontend UI: Mount the AnalysisHistoryPanel in AnalysisPage.tsx.
+- screenshot file at Screenshot 2026-11-18
